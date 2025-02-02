@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Neurons Challenge</title>
+    <script src="./jspsych.js"></script>
+    <script src="./plugins/jspsych-image-keyboard-response.js"></script>
+    <script src="./plugins/jspsych-preload.js"></script>
+    <link href="./css/jspsych.css" rel="stylesheet" type="text/css" />
+  </head>
+
+  <body></body>
+  <script>
+    // This survey covers from step 1 to step 5 and is created to experiment with the face blindness using the face images.
+
+    // Define a survey configuration.
+    const SURVEY_CONFIG = {
+      basePath: "images",
+      type: "image-keyboard-response",
+      preTrial: {
+        prompt: "<p>Look at the faces.</p>",
+        duration: 3000,
+        width: 400,
+      },
+      trial: {
+        prompt:
+          "<p>Have you seen this face before? Answer with 'y' (yes) or 'n' (no).</p>",
+        choices: ["y", "n"],
+      },
+    };
+
+    // Define the trial configurations.
+    const TRIAL_CONFIGS = [
+      {
+        imageName: "angelina-jolie.png",
+        isVisible: true,
+      },
+      {
+        imageName: "barack-obama.png",
+        isVisible: true,
+      },
+      {
+        imageName: "david-beckham.png",
+        isVisible: true,
+      },
+      {
+        imageName: "johnny-depp.png",
+        isVisible: false,
+      },
+    ];
+
+    // Get a full image path.
+    const getImagePath = (imageName) => {
+      return `${SURVEY_CONFIG.basePath}/${imageName}`;
+    };
+
+    // Create a preload object to configure image preloading for the trials.
+    const preload = {
+      type: "preload",
+      auto_preload: true,
+    };
+
+    // Create a trial object with the configuration.
+    const preTrial = {
+      type: SURVEY_CONFIG.type,
+      stimulus: jsPsych.timelineVariable("stim"),
+      trial_duration: SURVEY_CONFIG.preTrial.duration,
+      choices: jsPsych.NO_KEYS,
+      prompt: SURVEY_CONFIG.preTrial.prompt,
+      stimulus_width: SURVEY_CONFIG.preTrial.width,
+    };
+
+    // Get the image names that are visible.
+    const getVisibleImages = TRIAL_CONFIGS.reduce((acc, trialConfig) => {
+      if (trialConfig.isVisible) {
+        acc.push({ stim: getImagePath(trialConfig.imageName) });
+      }
+      return acc;
+    }, []);
+
+    // Define the trial procedure to display the images in a randomized order.
+    const trialProcedure = {
+      timeline: [preTrial],
+      timeline_variables: getVisibleImages,
+      repetitions: 1,
+      randomize_order: true,
+    };
+
+    // Create a trial object.
+    const createTrial = (imageName) => ({
+      type: SURVEY_CONFIG.type,
+      stimulus: getImagePath(imageName),
+      choices: SURVEY_CONFIG.trial.choices,
+      prompt: SURVEY_CONFIG.trial.prompt,
+    });
+
+    // Create the trials that display images and accept keyboard responses.
+    const trials = TRIAL_CONFIGS.map((trialConfig) =>
+      createTrial(trialConfig.imageName)
+    );
+
+    // Start the trials and display the result at the end.
+    jsPsych.init({
+      timeline: [preload, trialProcedure, ...trials],
+      on_finish: function () {
+        jsPsych.data.displayData();
+      },
+    });
+  </script>
+</html>
