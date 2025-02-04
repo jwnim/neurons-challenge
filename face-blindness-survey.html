@@ -3,55 +3,46 @@
   <head>
     <title>Neurons Challenge</title>
     <script src="./jspsych.js"></script>
+    <script src="./plugins/jspsych-html-keyboard-response.js"></script>
     <script src="./plugins/jspsych-image-keyboard-response.js"></script>
+    <script src="./plugins/jspsych-video-keyboard-response.js"></script>
     <script src="./plugins/jspsych-preload.js"></script>
     <link href="./css/jspsych.css" rel="stylesheet" type="text/css" />
   </head>
 
   <body></body>
   <script>
-    // This survey covers from step 1 to step 5 and is created to experiment with the face blindness using the face images.
+    // This survey covers from step 1 to step 12 and is created to experiment with the face blindness using the face images and videos.
 
-    // Define a survey configuration.
     const SURVEY_CONFIG = {
-      basePath: "images",
-      type: "image-keyboard-response",
-      preTrial: {
-        prompt: "<p>Look at the faces.</p>",
+      html: {
+        type: "html-keyboard-response",
+        prompt: "<p>Thank you for your participation!</p>",
         duration: 3000,
+      },
+      video: {
+        basePath: "videos",
+        type: "video-keyboard-response",
+        prompt: "<p>Look at the face.</p>",
+        width: 600,
+      },
+      image: {
+        basePath: "images",
+        type: "image-keyboard-response",
+        prompt: "<p>Was it this person? Answer with 'y' (yes) or 'n' (no).</p>",
+        choices: ["y", "n"],
+        duration: 2500,
         width: 400,
       },
-      trial: {
-        prompt:
-          "<p>Have you seen this face before? Answer with 'y' (yes) or 'n' (no).</p>",
-        choices: ["y", "n"],
-      },
     };
-
-    // Define the trial configurations.
-    const TRIAL_CONFIGS = [
-      {
-        imageName: "angelina-jolie.png",
-        isVisible: true,
-      },
-      {
-        imageName: "barack-obama.png",
-        isVisible: true,
-      },
-      {
-        imageName: "david-beckham.png",
-        isVisible: true,
-      },
-      {
-        imageName: "johnny-depp.png",
-        isVisible: false,
-      },
+    const VIDEOS = ["angelina-jolie.mp4", "johnny-depp.mp4"];
+    const IMAGES = [
+      "angelina-jolie.png",
+      "audrey-hepburn.png",
+      "barack-obama.png",
+      "david-beckham.png",
+      "johnny-depp.png",
     ];
-
-    // Get a full image path.
-    const getImagePath = (imageName) => {
-      return `${SURVEY_CONFIG.basePath}/${imageName}`;
-    };
 
     // Create a preload object to configure image preloading for the trials.
     const preload = {
@@ -59,49 +50,102 @@
       auto_preload: true,
     };
 
-    // Create a trial object with the configuration.
-    const preTrial = {
-      type: SURVEY_CONFIG.type,
-      stimulus: jsPsych.timelineVariable("stim"),
-      trial_duration: SURVEY_CONFIG.preTrial.duration,
-      choices: jsPsych.NO_KEYS,
-      prompt: SURVEY_CONFIG.preTrial.prompt,
-      stimulus_width: SURVEY_CONFIG.preTrial.width,
+    // Get a file path.
+    const getFilePath = (basePath, fileName) => {
+      return `${basePath}/${fileName}`;
     };
 
-    // Get the image names that are visible.
-    const getVisibleImages = TRIAL_CONFIGS.reduce((acc, trialConfig) => {
-      if (trialConfig.isVisible) {
-        acc.push({ stim: getImagePath(trialConfig.imageName) });
-      }
-      return acc;
-    }, []);
+    // Create a first video trial.
+    const videoPreTrial1 = {
+      type: SURVEY_CONFIG.video.type,
+      stimulus: [getFilePath(SURVEY_CONFIG.video.basePath, VIDEOS[0])],
+      choices: jsPsych.NO_KEYS,
+      prompt: SURVEY_CONFIG.video.prompt,
+      width: SURVEY_CONFIG.video.width,
+      rate: 0.7, // Slow down a little bit.
+      autoplay: true,
+      trial_ends_after_video: true,
+      response_allowed_while_playing: false,
+    };
 
-    // Define the trial procedure to display the images in a randomized order.
-    const trialProcedure = {
-      timeline: [preTrial],
-      timeline_variables: getVisibleImages,
+    // Create a second video trial.
+    const videoPreTrial2 = {
+      type: SURVEY_CONFIG.video.type,
+      stimulus: [getFilePath(SURVEY_CONFIG.video.basePath, VIDEOS[1])],
+      choices: jsPsych.NO_KEYS,
+      prompt: SURVEY_CONFIG.video.prompt,
+      width: SURVEY_CONFIG.video.width,
+      rate: 0.9, // Slow down a little bit.
+      autoplay: true,
+      trial_ends_after_video: true,
+      response_allowed_while_playing: false,
+    };
+
+    // Create an image trial object with the configuration.
+    const preImageTrial = {
+      type: SURVEY_CONFIG.image.type,
+      stimulus: jsPsych.timelineVariable("stim"),
+      trial_duration: SURVEY_CONFIG.image.duration,
+      choices: SURVEY_CONFIG.image.choices,
+      prompt: SURVEY_CONFIG.image.prompt,
+      stimulus_width: SURVEY_CONFIG.width,
+    };
+
+    // Generate a random integer between min and max integer.
+    const randomInt = (min, max) => {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    };
+
+    // blankScreen (Blank_Screen) displays the blank screen after each question.
+    const blankScreen = {
+      type: SURVEY_CONFIG.html.type,
+      stimulus: "",
+      choices: jsPsych.NO_KEYS,
+      trial_duration: randomInt(500, 700),
+      prompt: "",
+    };
+
+    // Create timeline variables.
+    const timelineVars = IMAGES.map((imageName) => ({
+      stim: getFilePath(SURVEY_CONFIG.image.basePath, imageName),
+    }));
+
+    // Create the first image trial procedure to display the images in a randomized order.
+    const imageTrialProcedure1 = {
+      timeline: [preImageTrial, blankScreen],
+      timeline_variables: timelineVars,
       repetitions: 1,
       randomize_order: true,
     };
 
-    // Create a trial object.
-    const createTrial = (imageName) => ({
-      type: SURVEY_CONFIG.type,
-      stimulus: getImagePath(imageName),
-      choices: SURVEY_CONFIG.trial.choices,
-      prompt: SURVEY_CONFIG.trial.prompt,
-    });
+    // Create the second image trial procedure to display the images in a randomized order.
+    const imageTrialProcedure2 = {
+      timeline: [preImageTrial, blankScreen],
+      timeline_variables: timelineVars,
+      repetitions: 1,
+      randomize_order: true,
+    };
 
-    // Create the trials that display images and accept keyboard responses.
-    const trials = TRIAL_CONFIGS.map((trialConfig) =>
-      createTrial(trialConfig.imageName)
-    );
+    // Create a trial for prompting the final instruction.
+    const finalInstructionTrial = {
+      type: SURVEY_CONFIG.html.type,
+      stimulus: "",
+      choices: jsPsych.NO_KEYS,
+      trial_duration: SURVEY_CONFIG.html.duration,
+      prompt: SURVEY_CONFIG.html.prompt,
+    };
 
     // Start the trials and display the result at the end.
     jsPsych.init({
-      timeline: [preload, trialProcedure, ...trials],
-      on_finish: function () {
+      timeline: [
+        preload,
+        videoPreTrial1,
+        imageTrialProcedure1,
+        videoPreTrial2,
+        imageTrialProcedure2,
+        finalInstructionTrial,
+      ],
+      on_finish: function (data) {
         jsPsych.data.displayData();
       },
     });
