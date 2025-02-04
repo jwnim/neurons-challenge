@@ -143,6 +143,19 @@
         imageTrialProcedure2,
         finalInstructionTrial,
       ],
+      on_trial_start: (data) => {
+        if (data.type === SURVEY_CONFIG.video.type) {
+          setTimeout(() => {
+            // On Chrome, the videos don't autoplay with sound so I added the muted attribute when the video element is loaded in the DOM.
+            const videoElement = document.getElementById(
+              "jspsych-video-keyboard-response-stimulus"
+            );
+            if (videoElement) {
+              videoElement.muted = true; // Mute the video.
+            }
+          }, 0);
+        }
+      },
       on_finish: function (data) {
         jsPsych.data.displayData();
       },
