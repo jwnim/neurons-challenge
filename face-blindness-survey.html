@@ -7,6 +7,7 @@
     <script src="./plugins/jspsych-image-keyboard-response.js"></script>
     <script src="./plugins/jspsych-video-keyboard-response.js"></script>
     <script src="./plugins/jspsych-preload.js"></script>
+    <script src="jatos.js"></script>
     <link href="./css/jspsych.css" rel="stylesheet" type="text/css" />
   </head>
 
@@ -133,32 +134,38 @@
       prompt: SURVEY_CONFIG.html.prompt,
     };
 
-    // Start the trials and display the result at the end.
-    jsPsych.init({
-      timeline: [
-        preload,
-        videoPreTrial1,
-        imageTrialProcedure1,
-        videoPreTrial2,
-        imageTrialProcedure2,
-        finalInstructionTrial,
-      ],
-      on_trial_start: (data) => {
-        if (data.type === SURVEY_CONFIG.video.type) {
-          setTimeout(() => {
-            // On Chrome, the videos don't autoplay with sound so I added the muted attribute when the video element is loaded in the DOM.
-            const videoElement = document.getElementById(
-              "jspsych-video-keyboard-response-stimulus"
-            );
-            if (videoElement) {
-              videoElement.muted = true; // Mute the video.
-            }
-          }, 0);
-        }
-      },
-      on_finish: function (data) {
-        jsPsych.data.displayData();
-      },
+    jatos.onLoad(function () {
+      // Start the trials and display the result at the end.
+      jsPsych.init({
+        timeline: [
+          preload,
+          videoPreTrial1,
+          imageTrialProcedure1,
+          videoPreTrial2,
+          imageTrialProcedure2,
+          finalInstructionTrial,
+        ],
+        on_trial_start: (data) => {
+          if (data.type === SURVEY_CONFIG.video.type) {
+            setTimeout(() => {
+              // On Chrome, the videos don't autoplay with sound so I added the muted attribute when the video element is loaded in the DOM.
+              const videoElement = document.getElementById(
+                "jspsych-video-keyboard-response-stimulus"
+              );
+              if (videoElement) {
+                videoElement.muted = true; // Mute the video.
+              }
+            }, 0);
+          }
+        },
+        on_finish: function (data) {
+          jsPsych.data.displayData();
+
+          // Submit results to JATOS
+          const resultJson = jsPsych.data.get().json();
+          jatos.submitResultData(resultJson, jatos.startNextComponent);
+        },
+      });
     });
   </script>
 </html>
